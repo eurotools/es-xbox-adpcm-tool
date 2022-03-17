@@ -5,8 +5,6 @@
 ### Features
 This tool can be used to encode 16-bits PCM Wav files to the Xbox ADPCM Format, and vice-versa. 
 
-It is only compatible with headerless Xbox ADPCM files, so, to decode a Xbox ADPCM file is required to know previously the frequency and the number of channels to avoid undesired results when decoding. 
-
 ### Download
 Click here to download:
 
