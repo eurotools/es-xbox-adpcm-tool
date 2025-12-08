@@ -120,15 +120,7 @@ namespace XboxAdpcmTool
                 }
 
                 //Start decoding!
-                byte[] pcmByteData = null;
-                if (channels == 2)
-                {
-                    pcmByteData = XboxAdpcm.Decode(adpcmData, channels);
-                }
-                else
-                {
-                    pcmByteData = XboxAdpcm.Decode(adpcmData, channels);
-                }
+                byte[] pcmByteData = XboxAdpcm.Decode(adpcmData, channels);
 
                 //Save file
                 IWaveProvider provider = new RawSourceWaveStream(new MemoryStream(pcmByteData), new WaveFormat(frequency, 16, channels));
