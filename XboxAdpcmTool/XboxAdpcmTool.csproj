@@ -48,14 +48,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Adpcm Functions\XboxAdpcm.cs" />
-    <Compile Include="Adpcm Functions\XboxAdpcmDecoder.cs" />
-    <Compile Include="Adpcm Functions\XboxAdpcmEncoder.cs" />
-    <Compile Include="Adpcm Functions\XboxAdpcmWriter.cs" />
+    <Compile Include="AudioCodec\XboxAdpcm.cs" />
+    <Compile Include="Classes\ToolUtils.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="ProgramFunctions.cs" />
+    <Compile Include="Classes\ProgramFunctions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WaveStuff\WavFunctions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
