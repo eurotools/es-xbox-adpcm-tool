@@ -32,15 +32,11 @@ namespace XboxAdpcmTool
         }
 
         //-------------------------------------------------------------------------------------------------------------------------------
-        internal static short[] ConvertByteArrayToShortArray(byte[] PCMData)
+        internal static short[] ConvertByteArrayToShortArray(byte[] pcmData)
         {
-            short[] samplesShort = new short[PCMData.Length / 2];
-            WaveBuffer sourceWaveBuffer = new WaveBuffer(PCMData);
-            for (int i = 0; i < samplesShort.Length; i++)
-            {
-                samplesShort[i] = sourceWaveBuffer.ShortBuffer[i];
-            }
-            return samplesShort;
+            short[] samples = new short[pcmData.Length / 2];
+            Buffer.BlockCopy(pcmData, 0, samples, 0, pcmData.Length);
+            return samples;
         }
 
         //-------------------------------------------------------------------------------------------------------------------------------
