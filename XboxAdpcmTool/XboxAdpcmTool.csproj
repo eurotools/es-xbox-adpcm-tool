@@ -48,10 +48,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AudioCodec\XboxAdpcm.cs" />
-    <Compile Include="Classes\ToolUtils.cs" />
+    <Compile Include="Audio\AudioBufferUtils.cs" />
+    <Compile Include="Cli\CommandLineApp.cs" />
+    <Compile Include="Codecs\XboxAdpcmCodec.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Classes\ProgramFunctions.cs" />
+    <Compile Include="Wave\XboxAdpcmWaveConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
