@@ -1,3 +1,14 @@
+//-------------------------------------------------------------------------------------------------------------------------------
+// __   ___                          _____  _____   _____ __  __
+// \ \ / / |                   /\   |  __ \|  __ \ / ____|  \/  |
+//  \ V /| |__   _____  __    /  \  | |  | | |__) | |    | \  / |
+//   > < | '_ \ / _ \ \/ /   / /\ \ | |  | |  ___/| |    | |\/| |
+//  / . \| |_) | (_) >  <   / ____ \| |__| | |    | |____| |  | |
+// /_/ \_\_.__/ \___/_/\_\ /_/    \_\_____/|_|     \_____|_|  |_|
+//
+//-------------------------------------------------------------------------------------------------------------------------------
+// Xbox ADPCM Wave Conversion
+//-------------------------------------------------------------------------------------------------------------------------------
 using NAudio.Wave;
 using System;
 using System.IO;
@@ -5,8 +16,12 @@ using System.Text;
 
 namespace XboxAdpcmTool
 {
+    //-------------------------------------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------------------------------------
     internal static class XboxAdpcmWaveConverter
     {
+        //-------------------------------------------------------------------------------------------------------------------------------
         internal static void EncodePcmWave(string inputFile, string outputFile)
         {
             if (!HasWaveExtension(inputFile))
@@ -37,6 +52,7 @@ namespace XboxAdpcmTool
             }
         }
 
+        //-------------------------------------------------------------------------------------------------------------------------------
         internal static void DecodeAdpcmWave(string inputFile, string outputFile)
         {
             if (!HasWaveExtension(inputFile))
@@ -65,6 +81,7 @@ namespace XboxAdpcmTool
             Console.WriteLine("Decoding complete: " + outputFile);
         }
 
+        //-------------------------------------------------------------------------------------------------------------------------------
         private static void ValidatePcmInput(WaveFormat format)
         {
             if (format.Encoding != WaveFormatEncoding.Pcm)
@@ -80,6 +97,7 @@ namespace XboxAdpcmTool
                 throw new InvalidDataException("WAV has an invalid sample rate.");
         }
 
+        //-------------------------------------------------------------------------------------------------------------------------------
         private static void ValidateAdpcmInput(WaveFormat format)
         {
             if ((int)format.Encoding != XboxAdpcmCodec.FormatTag)
@@ -98,6 +116,7 @@ namespace XboxAdpcmTool
                 throw new InvalidDataException("WAV has an invalid sample rate.");
         }
 
+        //-------------------------------------------------------------------------------------------------------------------------------
         private static void WriteAdpcmWave(byte[] adpcmData, string outputFilePath, WaveFormat sourceFormat)
         {
             int blockAlign = XboxAdpcmCodec.BlockBytes * sourceFormat.Channels;
@@ -128,6 +147,7 @@ namespace XboxAdpcmTool
             }
         }
 
+        //-------------------------------------------------------------------------------------------------------------------------------
         private static byte[] ReadWaveData(WaveFileReader reader)
         {
             if (reader.Length > int.MaxValue)
@@ -155,11 +175,13 @@ namespace XboxAdpcmTool
             return trimmed;
         }
 
+        //-------------------------------------------------------------------------------------------------------------------------------
         private static bool HasWaveExtension(string filePath)
         {
             return Path.GetExtension(filePath).Equals(".wav", StringComparison.OrdinalIgnoreCase);
         }
 
+        //-------------------------------------------------------------------------------------------------------------------------------
         private static bool IsSupportedChannelCount(int channels)
         {
             return channels == 1 || channels == 2;
