@@ -29,6 +29,8 @@ Your WAV file **must** meet the following conditions (validated internally):
 
 If these conditions are not met, the tool will display an error message  
 
+The PCM data chunk must contain complete sample frames. Files whose audio payload exceeds the maximum in-memory array size are rejected with an error.
+
 ### **Decoding Input (Xbox ADPCM → PCM)**  
 
 The tool accepts WAV files whose payload contains Xbox ADPCM data.  

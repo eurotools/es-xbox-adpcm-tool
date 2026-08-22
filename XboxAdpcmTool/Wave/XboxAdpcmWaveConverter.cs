@@ -23,6 +23,12 @@ namespace XboxAdpcmTool
                     throw new InvalidDataException("No audio data found.");
                 }
 
+                int pcmFrameSize = format.Channels * sizeof(short);
+                if (pcmBytes.Length % pcmFrameSize != 0)
+                {
+                    throw new InvalidDataException("WAV contains an incomplete PCM sample frame.");
+                }
+
                 short[] pcmData = AudioBufferUtils.BytesToPcm16Samples(pcmBytes);
                 byte[] adpcmData = XboxAdpcmCodec.Encode(pcmData, format.Channels);
                 WriteAdpcmWave(adpcmData, outputFile, format);
@@ -51,8 +57,11 @@ namespace XboxAdpcmTool
             }
 
             byte[] pcmByteData = XboxAdpcmCodec.Decode(adpcmData, channels);
-            IWaveProvider provider = new RawSourceWaveStream(new MemoryStream(pcmByteData), new WaveFormat(sampleRate, 16, channels));
-            WaveFileWriter.CreateWaveFile(outputFile, provider);
+            using (MemoryStream pcmStream = new MemoryStream(pcmByteData))
+            using (RawSourceWaveStream provider = new RawSourceWaveStream(pcmStream, new WaveFormat(sampleRate, 16, channels)))
+            {
+                WaveFileWriter.CreateWaveFile(outputFile, provider);
+            }
             Console.WriteLine("Decoding complete: " + outputFile);
         }
 
@@ -121,7 +130,12 @@ namespace XboxAdpcmTool
 
         private static byte[] ReadWaveData(WaveFileReader reader)
         {
-            byte[] data = new byte[reader.Length];
+            if (reader.Length > int.MaxValue)
+            {
+                throw new InvalidDataException("WAV data is too large to process in memory.");
+            }
+
+            byte[] data = new byte[(int)reader.Length];
             int offset = 0;
 
             while (offset < data.Length)
