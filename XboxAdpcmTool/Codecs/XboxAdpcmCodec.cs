@@ -48,20 +48,19 @@ namespace XboxAdpcmTool
                 return new byte[0];
 
             short[][] pcmCh = AudioBufferUtils.SplitChannels(input, channels);
-            int blocks = (totalSamples + BlockSamples - 1) / BlockSamples;
+            int blocks = totalSamples / BlockSamples;
 
             using (MemoryStream ms = new MemoryStream())
             using (BinaryWriter bw = new BinaryWriter(ms))
             {
+                AdpcmState[] state = new AdpcmState[channels];
                 for (int blk = 0; blk < blocks; blk++)
                 {
-                    AdpcmState[] state = new AdpcmState[channels];
-
                     for (int ch = 0; ch < channels; ch++)
                     {
                         int start = blk * BlockSamples;
                         short predictor = pcmCh[ch][start];
-                        int bestIndex = FindInitialStepIndex(pcmCh[ch], start);
+                        int bestIndex = blk == 0 ? 0 : state[ch].Index;
 
                         state[ch].Predictor = predictor;
                         state[ch].Index = (sbyte)bestIndex;
@@ -80,12 +79,13 @@ namespace XboxAdpcmTool
 
                             for (int i = 0; i < 8; i++)
                             {
-                                int sampleIndex = blk * BlockSamples + group * 8 + i;
-                                short sample = sampleIndex < pcmCh[c].Length
-                                    ? pcmCh[c][sampleIndex]
-                                    : state[c].Predictor;
-
-                                int code = EncodeNibble(sample, ref state[c]);
+                                int sampleInBlock = group * 8 + i;
+                                int code = 0;
+                                if (sampleInBlock < BlockSamples - 1)
+                                {
+                                    int sampleIndex = blk * BlockSamples + sampleInBlock + 1;
+                                    code = EncodeNibble(pcmCh[c][sampleIndex], ref state[c]);
+                                }
                                 pack |= (uint)(code & 0x0F) << shift;
                                 shift += 4;
                             }
@@ -123,13 +123,16 @@ namespace XboxAdpcmTool
                     {
                         short predictor = (short)(input[inPos++] | (input[inPos++] << 8));
                         int index = input[inPos++] | (input[inPos++] << 8);
-                        if (index < 0) index = 0;
-                        if (index > StepSizeTable.Length - 1) index = StepSizeTable.Length - 1;
+                        if (index < 0 || index > StepSizeTable.Length - 1)
+                            throw new InvalidDataException("Invalid Xbox ADPCM step index: " + index + ".");
 
                         state[c].Predictor = predictor;
                         state[c].Index = (sbyte)index;
                         state[c].StepSize = (short)StepSizeTable[index];
                     }
+
+                    for (int c = 0; c < channels; c++)
+                        pcmOut.Write(state[c].Predictor);
 
                     for (int group = 0; group < 8; group++)
                     {
@@ -147,13 +150,18 @@ namespace XboxAdpcmTool
 
                             for (int j = 0; j < 8; j++)
                             {
-                                int code = (int)(nibblePack & 0x0F);
-                                buffer[ch, j] = DecodeSample(code, ref state[ch]);
+                                int sampleInBlock = group * 8 + j;
+                                if (sampleInBlock < BlockSamples - 1)
+                                {
+                                    int code = (int)(nibblePack & 0x0F);
+                                    buffer[ch, j] = DecodeSample(code, ref state[ch]);
+                                }
                                 nibblePack >>= 4;
                             }
                         }
 
-                        for (int j = 0; j < 8; j++)
+                        int samplesInGroup = group == 7 ? 7 : 8;
+                        for (int j = 0; j < samplesInGroup; j++)
                         {
                             for (int c = 0; c < channels; c++)
                                 pcmOut.Write(buffer[c, j]);
@@ -163,40 +171,6 @@ namespace XboxAdpcmTool
 
                 return pcmStream.ToArray();
             }
-        }
-
-        private static int FindInitialStepIndex(short[] channelSamples, int start)
-        {
-            int avgDiff = 0;
-            int count = 0;
-
-            for (int k = 1; k < 8; k++)
-            {
-                int si = start + k;
-                if (si >= channelSamples.Length)
-                    break;
-
-                avgDiff += Math.Abs(channelSamples[si] - channelSamples[si - 1]);
-                count++;
-            }
-
-            if (count > 0)
-                avgDiff /= count;
-
-            int bestIndex = 0;
-            int bestDelta = Math.Abs(StepSizeTable[0] - avgDiff);
-
-            for (int i = 1; i < StepSizeTable.Length; i++)
-            {
-                int d = Math.Abs(StepSizeTable[i] - avgDiff);
-                if (d < bestDelta)
-                {
-                    bestDelta = d;
-                    bestIndex = i;
-                }
-            }
-
-            return bestIndex;
         }
 
         private static int EncodeNibble(short val, ref AdpcmState st)

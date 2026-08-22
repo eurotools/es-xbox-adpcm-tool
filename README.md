@@ -34,6 +34,8 @@ If these conditions are not met, the tool will display an error message
 The tool accepts WAV files whose payload contains Xbox ADPCM data.  
 It will decode the ADPCM stream using channel count and sample rate info from the WAV header.
 
+Xbox ADPCM operates on complete blocks of 64 PCM frames. Encoding intentionally discards a final partial block, matching the block-oriented format. Inputs shorter than 64 frames produce a valid WAV header with an empty ADPCM data chunk.
+
 # Usage
 
 This is a command-line tool.  
@@ -60,6 +62,14 @@ XboxAdpcmTool.exe Decode input.wav output.wav
 ```
 XboxAdpcmTool.exe Decode MySound_ADPCM.wav MySound_PCM.wav
 ```
+
+## Exit codes
+
+- `0`: conversion completed successfully.
+- `1`: an input, output, format, or conversion error occurred.
+- `2`: command-line usage error.
+
+The existing two-argument encoding command remains unchanged, including when the input is stereo.
 
 ## Download
 Get the latest release here:

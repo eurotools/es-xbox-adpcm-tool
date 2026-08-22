@@ -5,12 +5,18 @@ namespace XboxAdpcmTool
 {
     internal static class CommandLineApp
     {
-        internal static void Run(string[] args)
+        internal static int Run(string[] args)
         {
-            if (args.Length == 0 || IsHelp(args[0]))
+            if (args.Length == 0)
             {
                 ShowHelp();
-                return;
+                return 2;
+            }
+
+            if (IsHelp(args[0]))
+            {
+                ShowHelp();
+                return 0;
             }
 
             if (args[0].Equals("Decode", StringComparison.OrdinalIgnoreCase))
@@ -18,23 +24,24 @@ namespace XboxAdpcmTool
                 if (args.Length != 3)
                 {
                     ShowHelp();
-                    return;
+                    return 2;
                 }
 
-                if (CheckFileExists(args[1]))
-                    XboxAdpcmWaveConverter.DecodeAdpcmWave(args[1], args[2].Trim());
+                if (!CheckFileExists(args[1])) return 1;
+                XboxAdpcmWaveConverter.DecodeAdpcmWave(args[1], args[2].Trim());
 
-                return;
+                return 0;
             }
 
             if (args.Length != 2)
             {
                 ShowHelp();
-                return;
+                return 2;
             }
 
-            if (CheckFileExists(args[0]))
-                XboxAdpcmWaveConverter.EncodePcmWave(args[0], args[1].Trim());
+            if (!CheckFileExists(args[0])) return 1;
+            XboxAdpcmWaveConverter.EncodePcmWave(args[0], args[1].Trim());
+            return 0;
         }
 
         private static bool CheckFileExists(string filePath)

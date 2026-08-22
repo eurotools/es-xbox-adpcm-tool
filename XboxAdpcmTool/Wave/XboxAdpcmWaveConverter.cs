@@ -10,22 +10,17 @@ namespace XboxAdpcmTool
         internal static void EncodePcmWave(string inputFile, string outputFile)
         {
             if (!HasWaveExtension(inputFile))
-            {
-                Console.WriteLine("Error: Only WAV files are supported.");
-                return;
-            }
+                throw new InvalidDataException("Only WAV files are supported.");
 
             using (WaveFileReader reader = new WaveFileReader(inputFile))
             {
                 WaveFormat format = reader.WaveFormat;
-                if (!ValidatePcmInput(format))
-                    return;
+                ValidatePcmInput(format);
 
                 byte[] pcmBytes = ReadWaveData(reader);
                 if (pcmBytes.Length == 0)
                 {
-                    Console.WriteLine("Error: No audio data found.");
-                    return;
+                    throw new InvalidDataException("No audio data found.");
                 }
 
                 short[] pcmData = AudioBufferUtils.BytesToPcm16Samples(pcmBytes);
@@ -39,10 +34,7 @@ namespace XboxAdpcmTool
         internal static void DecodeAdpcmWave(string inputFile, string outputFile)
         {
             if (!HasWaveExtension(inputFile))
-            {
-                Console.WriteLine("Error: Only WAV files are supported.");
-                return;
-            }
+                throw new InvalidDataException("Only WAV files are supported.");
 
             byte[] adpcmData;
             int sampleRate;
@@ -51,71 +43,50 @@ namespace XboxAdpcmTool
             using (WaveFileReader reader = new WaveFileReader(inputFile))
             {
                 WaveFormat format = reader.WaveFormat;
-                if (!ValidateAdpcmInput(format))
-                    return;
+                ValidateAdpcmInput(format);
 
                 sampleRate = format.SampleRate;
                 channels = format.Channels;
                 adpcmData = ReadWaveData(reader);
             }
 
-            try
-            {
-                byte[] pcmByteData = XboxAdpcmCodec.Decode(adpcmData, channels);
-                IWaveProvider provider = new RawSourceWaveStream(new MemoryStream(pcmByteData), new WaveFormat(sampleRate, 16, channels));
-                WaveFileWriter.CreateWaveFile(outputFile, provider);
-                Console.WriteLine("Decoding complete: " + outputFile);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
-            }
+            byte[] pcmByteData = XboxAdpcmCodec.Decode(adpcmData, channels);
+            IWaveProvider provider = new RawSourceWaveStream(new MemoryStream(pcmByteData), new WaveFormat(sampleRate, 16, channels));
+            WaveFileWriter.CreateWaveFile(outputFile, provider);
+            Console.WriteLine("Decoding complete: " + outputFile);
         }
 
-        private static bool ValidatePcmInput(WaveFormat format)
+        private static void ValidatePcmInput(WaveFormat format)
         {
             if (format.Encoding != WaveFormatEncoding.Pcm)
-            {
-                Console.WriteLine("Error: WAV must be PCM.");
-                return false;
-            }
+                throw new InvalidDataException("WAV must be PCM.");
 
             if (format.BitsPerSample != 16)
-            {
-                Console.WriteLine("Error: WAV must be 16-bit.");
-                return false;
-            }
+                throw new InvalidDataException("WAV must be 16-bit.");
 
             if (!IsSupportedChannelCount(format.Channels))
-            {
-                Console.WriteLine("Error: WAV must be mono or stereo.");
-                return false;
-            }
+                throw new InvalidDataException("WAV must be mono or stereo.");
 
-            return true;
+            if (format.SampleRate <= 0 || format.SampleRate > 384000)
+                throw new InvalidDataException("WAV has an invalid sample rate.");
         }
 
-        private static bool ValidateAdpcmInput(WaveFormat format)
+        private static void ValidateAdpcmInput(WaveFormat format)
         {
             if ((int)format.Encoding != XboxAdpcmCodec.FormatTag)
-            {
-                Console.WriteLine("Error: WAV must use Xbox ADPCM format 0x0069.");
-                return false;
-            }
+                throw new InvalidDataException("WAV must use Xbox ADPCM format 0x0069.");
 
             if (!IsSupportedChannelCount(format.Channels))
-            {
-                Console.WriteLine("Error: WAV must be mono or stereo.");
-                return false;
-            }
+                throw new InvalidDataException("WAV must be mono or stereo.");
 
             if (format.BitsPerSample != XboxAdpcmCodec.BitsPerSample)
-            {
-                Console.WriteLine("Error: Xbox ADPCM WAV must be 4-bit.");
-                return false;
-            }
+                throw new InvalidDataException("Xbox ADPCM WAV must be 4-bit.");
 
-            return true;
+            if (format.BlockAlign != XboxAdpcmCodec.BlockBytes * format.Channels)
+                throw new InvalidDataException("Xbox ADPCM WAV has an invalid block alignment.");
+
+            if (format.SampleRate <= 0 || format.SampleRate > 384000)
+                throw new InvalidDataException("WAV has an invalid sample rate.");
         }
 
         private static void WriteAdpcmWave(byte[] adpcmData, string outputFilePath, WaveFormat sourceFormat)
